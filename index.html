@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Celinecraft</title>
+    <style>
+      :root {
+        font-family: "Trebuchet MS", Arial, sans-serif;
+        color: #f4f8ff;
+        background: #03060b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #03060b;
+      }
+
+      #hud {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.65rem 1.5rem;
+        border-radius: 999px;
+        background: rgba(4, 10, 18, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        text-align: center;
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+        letter-spacing: 0.05em;
+      }
+
+      #hud strong {
+        display: block;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+      }
+
+      #hud span {
+        font-size: 0.8rem;
+        opacity: 0.85;
+      }
+
+      #instructions {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1rem;
+        background: rgba(2, 4, 8, 0.92);
+        color: #f8fbff;
+        z-index: 10;
+      }
+
+      #instructions button {
+        background: linear-gradient(135deg, #31c77f, #139760);
+        border: none;
+        color: white;
+        padding: 0.8rem 1.6rem;
+        border-radius: 999px;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      }
+
+      #instructions button:active {
+        transform: scale(0.97);
+      }
+
+      #instructions p {
+        margin: 0;
+        text-align: center;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      #health {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        min-width: 180px;
+        padding: 0.6rem 0.8rem;
+        border-radius: 14px;
+        background: rgba(3, 5, 9, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      #health span {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+
+      .health-track {
+        width: 100%;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      #health-fill {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #ffe066);
+        border-radius: 999px;
+        transition: width 0.2s ease;
+      }
+
+      .crosshair::before,
+      .crosshair::after {
+        content: "";
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: 2px;
+        height: 18px;
+        margin-left: -1px;
+        margin-top: -9px;
+        background: rgba(255, 255, 255, 0.75);
+        z-index: 5;
+      }
+
+      .crosshair::after {
+        transform: rotate(90deg);
+      }
+
+      #inventory {
+        position: fixed;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: flex-end;
+        gap: 0.9rem;
+        padding: 0.6rem 1rem;
+        border-radius: 18px;
+        background: rgba(3, 6, 11, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+      }
+
+      .inventory-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .inventory-slot {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        background: rgba(18, 26, 36, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .inventory-slot.active {
+        border-color: #49ffb6;
+        box-shadow: 0 0 12px rgba(73, 255, 182, 0.45);
+      }
+
+      .inventory-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.78;
+      }
+
+      .inventory-slot svg {
+        width: 42px;
+        height: 42px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <strong>Celinecraft</strong>
+      <span>WASD move • Space jump • Left-click mine • Right-click place • F nap • B brush dog • X chop tree</span>
+    </div>
+    <div id="health" aria-live="polite">
+      <span>Health</span>
+      <div class="health-track">
+        <div id="health-fill"></div>
+      </div>
+      <span id="health-value">100 / 100</span>
+    </div>
+    <div id="instructions">
+      <button id="play">Click to Play</button>
+      <p>Look around with your mouse. Build cozy block stacks, sip the vibes.</p>
+    </div>
+    <div class="crosshair" aria-hidden="true"></div>
+    <div id="inventory" aria-label="Inventory hotbar">
+      <div class="inventory-item">
+        <div class="inventory-slot active" title="Diamond Pickaxe">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="pickaxeHead" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#cde8ff" />
+                <stop offset="100%" stop-color="#8fb5ff" />
+              </linearGradient>
+            </defs>
+            <path d="M12 20 L20 12 L36 28 L44 20 L52 28 L36 44 Z" fill="url(#pickaxeHead)" stroke="#1f2b3d" stroke-width="3" stroke-linejoin="round" />
+            <rect x="28" y="30" width="8" height="26" rx="3" fill="#9c6644" stroke="#502d16" stroke-width="2" />
+          </svg>
+        </div>
+        <span class="inventory-label">PICKAXE</span>
+      </div>
+      <div class="inventory-item">
+        <div class="inventory-slot" title="Brush">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M20 12 L34 26" stroke="#2a2a2a" stroke-width="6" stroke-linecap="round" />
+            <path d="M34 26 L50 42" stroke="#ffb347" stroke-width="8" stroke-linecap="round" />
+            <path d="M48 40 C54 46, 52 54, 44 52 C36 50, 34 44, 38 38 Z" fill="#f1dd9c" stroke="#caa768" stroke-width="2" />
+          </svg>
+        </div>
+        <span class="inventory-label">BRUSH</span>
+      </div>
+      <div class="inventory-item">
+        <div class="inventory-slot" title="Axe">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M18 14 L32 28" stroke="#7b4a1f" stroke-width="8" stroke-linecap="round" />
+            <path d="M32 28 L48 16 L54 22 L38 34 Z" fill="#dfe8f0" stroke="#7f8da3" stroke-width="3" />
+            <path d="M40 24 L46 30" stroke="#7f8da3" stroke-width="2" />
+          </svg>
+        </div>
+        <span class="inventory-label">AXE</span>
+      </div>
+    </div>
+
+    <script type="module">
+      import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js?module";
+      import { PointerLockControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/PointerLockControls.js?module";
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      document.body.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x87ceeb);
+
+      const camera = new THREE.PerspectiveCamera(
+        70,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      const controls = new PointerLockControls(camera, renderer.domElement);
+      controls.getObject().position.set(0, 3, 12);
+      controls.getObject().lookAt(new THREE.Vector3(0, 1.5, 0));
+      scene.add(controls.getObject());
+      window.game = { controls, scene };
+
+      const hintEl = document.querySelector("#hud span");
+      const defaultHint = hintEl.textContent;
+      let hintTimer = 0;
+
+      function setHint(text, duration = 150) {
+        hintEl.textContent = text;
+        hintTimer = duration;
+      }
+
+      const healthFill = document.getElementById("health-fill");
+      const healthValueEl = document.getElementById("health-value");
+      const healthState = { current: 100, max: 100 };
+
+      function updateHealthUI() {
+        const percent = (healthState.current / healthState.max) * 100;
+        healthFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+        healthValueEl.textContent = `${Math.round(healthState.current)} / ${healthState.max}`;
+      }
+
+      function setHealth(value) {
+        healthState.current = THREE.MathUtils.clamp(value, 0, healthState.max);
+        updateHealthUI();
+      }
+
+      function changeHealth(delta) {
+        const previous = healthState.current;
+        setHealth(previous + delta);
+        const diff = healthState.current - previous;
+        if (diff < 0) {
+          setHint(`Ouch! ${Math.abs(diff)} damage.`, 120);
+        } else if (diff > 0) {
+          setHint(`Healed ${diff} HP.`, 120);
+        }
+      }
+
+      updateHealthUI();
+      window.game.health = {
+        state: healthState,
+        set: setHealth,
+        change: changeHealth,
+      };
+
+      const ambient = new THREE.HemisphereLight(0xeef7ff, 0x9fb57a, 0.95);
+      scene.add(ambient);
+      const sun = new THREE.DirectionalLight(0xfff4d0, 1.1);
+      sun.position.set(40, 60, 10);
+      sun.castShadow = true;
+      sun.shadow.camera.top = 35;
+      sun.shadow.camera.bottom = -35;
+      sun.shadow.camera.left = -35;
+      sun.shadow.camera.right = 35;
+      scene.add(sun);
+
+      const fogColor = new THREE.Color(0xb7e5ff);
+      scene.fog = new THREE.Fog(fogColor, 60, 180);
+
+      const WORLD_RADIUS = 32;
+      const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
+      const blockMap = new Map();
+      const columnHeights = new Map();
+      const blockPalette = [0x6ba368, 0x52734d, 0x8ecae6, 0xe9c46a, 0x9c6644];
+      const PLAYER_EYE_HEIGHT = 1.6;
+      const STEP_HEIGHT = 1.25;
+      const columnKey = (x, z) => `${x}|${z}`;
+      const bedCenter = new THREE.Vector3(-6.5, 1.4, -2);
+      const restPose = {
+        position: new THREE.Vector3(-6.55, 2.05, -2.55),
+        lookAt: new THREE.Vector3(-6.4, 1.6, -1.6),
+        exitPosition: new THREE.Vector3(-5.4, 2.2, -1.8),
+        radius: 1.8,
+      };
+      const inventoryState = [
+        { id: "pickaxe", label: "Pickaxe" },
+        { id: "brush", label: "Brush" },
+        { id: "axe", label: "Axe" },
+      ];
+      let pickaxe;
+      let pickaxePhase = 0;
+      let bed;
+      let dog;
+      let dogPhase = 0;
+      let creeper;
+      let creeperPulse = 0;
+      let grassField;
+      let dogHappyTimer = 0;
+      let tree;
+      const treeState = { hp: 6, max: 6, alive: false };
+      let isResting = false;
+
+      function blockKey(x, y, z) {
+        return `${x}|${y}|${z}`;
+      }
+
+      function trackColumnHeight(x, z, y, add = true) {
+        const key = columnKey(x, z);
+        let stack = columnHeights.get(key);
+        if (add) {
+          if (!stack) {
+            stack = new Set();
+            columnHeights.set(key, stack);
+          }
+          stack.add(y);
+        } else if (stack) {
+          stack.delete(y);
+          if (!stack.size) {
+            columnHeights.delete(key);
+          }
+        }
+      }
+
+      function getSurfaceHeight(worldX, worldZ) {
+        const key = columnKey(Math.round(worldX), Math.round(worldZ));
+        const stack = columnHeights.get(key);
+        if (!stack || !stack.size) {
+          return 0.5;
+        }
+        let maxY = -Infinity;
+        stack.forEach((value) => {
+          if (value > maxY) maxY = value;
+        });
+        return maxY + 0.5;
+      }
+
+      function addBlockAt(x, y, z, color = 0x6ba368) {
+        const key = blockKey(x, y, z);
+        if (blockMap.has(key)) return;
+        const material = new THREE.MeshStandardMaterial({ color });
+        const mesh = new THREE.Mesh(blockGeometry, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.position.set(x, y, z);
+        scene.add(mesh);
+        blockMap.set(key, mesh);
+        trackColumnHeight(x, z, y, true);
+      }
+
+      function removeBlockAt(x, y, z) {
+        const key = blockKey(x, y, z);
+        const mesh = blockMap.get(key);
+        if (!mesh) return;
+        scene.remove(mesh);
+        mesh.material.dispose();
+        trackColumnHeight(x, z, y, false);
+        blockMap.delete(key);
+      }
+
+      function seedTerrain() {
+        for (let x = -WORLD_RADIUS; x <= WORLD_RADIUS; x++) {
+          for (let z = -WORLD_RADIUS; z <= WORLD_RADIUS; z++) {
+            const base = -2;
+            for (let y = base; y <= 0; y++) {
+              addBlockAt(x, y, z, 0x2f3e46);
+            }
+            const hillHeight = Math.round(
+              Math.sin(x * 0.25) + Math.cos(z * 0.35) + (Math.random() * 1.5 - 0.5)
+            );
+            if (hillHeight > 0) {
+              for (let h = 1; h <= hillHeight; h++) {
+                addBlockAt(x, h, z, 0x4a8457);
+              }
+            }
+            if (Math.random() > 0.93) {
+              addBlockAt(x, 1 + Math.max(0, hillHeight), z, 0x8ecae6);
+            }
+          }
+        }
+      }
+
+      seedTerrain();
+      addBlockAt(2, 1, 2, 0xe9c46a);
+
+      function spawnPickaxe() {
+        const group = new THREE.Group();
+        const handleMat = new THREE.MeshStandardMaterial({ color: 0x9c6644, metalness: 0.05, roughness: 0.8 });
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xc0d6df, metalness: 0.45, roughness: 0.3 });
+
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.22, 2.6, 0.22), handleMat);
+        handle.castShadow = true;
+        handle.position.y = 1.3;
+        group.add(handle);
+
+        const crossbar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.25, 0.25), headMat);
+        crossbar.castShadow = true;
+        crossbar.position.set(0.35, 2.1, 0);
+        crossbar.rotation.z = 0.12;
+        group.add(crossbar);
+
+        const spike = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.9), headMat);
+        spike.castShadow = true;
+        spike.position.set(0.95, 2.2, 0);
+        group.add(spike);
+
+        group.position.set(2, 2.6, 2);
+        group.rotation.z = -0.35;
+        scene.add(group);
+        pickaxe = group;
+      }
+
+      spawnPickaxe();
+
+      function buildHouse() {
+        const origin = { x: -8, z: -4 };
+        const width = 6;
+        const depth = 5;
+        const floorY = 1;
+        const wallHeight = 4;
+        const doorX = origin.x + Math.floor(width / 2);
+        const doorZ = origin.z + depth - 1;
+
+        // floor
+        for (let x = origin.x; x < origin.x + width; x++) {
+          for (let z = origin.z; z < origin.z + depth; z++) {
+            addBlockAt(x, floorY, z, 0x5d5a58);
+          }
+        }
+
+        // walls
+        for (let y = floorY + 1; y <= floorY + wallHeight; y++) {
+          for (let x = origin.x; x < origin.x + width; x++) {
+            for (let z = origin.z; z < origin.z + depth; z++) {
+              const onEdge =
+                x === origin.x ||
+                x === origin.x + width - 1 ||
+                z === origin.z ||
+                z === origin.z + depth - 1;
+              if (!onEdge) continue;
+              const isDoorway =
+                x === doorX && z === doorZ && (y === floorY + 1 || y === floorY + 2);
+              if (isDoorway) continue;
+              addBlockAt(x, y, z, 0xa68a64);
+            }
+          }
+        }
+
+        // roof
+        const roofY = floorY + wallHeight + 1;
+        for (let x = origin.x - 1; x <= origin.x + width; x++) {
+          for (let z = origin.z - 1; z <= origin.z + depth; z++) {
+            addBlockAt(x, roofY, z, 0x4f4b47);
+          }
+        }
+
+        // doorway step
+        addBlockAt(doorX, floorY, doorZ + 1, 0xc7a068);
+      }
+
+      function spawnBed() {
+        const group = new THREE.Group();
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0x8c5f3d, roughness: 0.8 });
+        const mattressMat = new THREE.MeshStandardMaterial({ color: 0xfff0e0, roughness: 0.4 });
+        const blanketMat = new THREE.MeshStandardMaterial({ color: 0xd1495b, roughness: 0.5 });
+
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 1.4), frameMat);
+        frame.position.y = 0.2;
+        group.add(frame);
+
+        const mattress = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.3, 1.3), mattressMat);
+        mattress.position.set(0, 0.55, 0);
+        group.add(mattress);
+
+        const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.25, 0.7), blanketMat);
+        blanket.position.set(0, 0.7, -0.15);
+        group.add(blanket);
+
+        const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.25, 0.9), new THREE.MeshStandardMaterial({ color: 0xfaf9ff }));
+        pillow.position.set(-0.7, 0.8, 0.05);
+        group.add(pillow);
+
+        group.castShadow = true;
+        group.receiveShadow = true;
+        group.position.set(-6.5, 1.4, -2);
+        group.rotation.y = Math.PI * 0.5;
+        scene.add(group);
+        bed = group;
+      }
+
+      buildHouse();
+      spawnBed();
+      function spawnDog() {
+        const group = new THREE.Group();
+        const furMat = new THREE.MeshStandardMaterial({ color: 0x4a4a48, roughness: 0.8 });
+        const headMat = new THREE.MeshStandardMaterial({ color: 0x5c5a58, roughness: 0.7 });
+        const accentMat = new THREE.MeshStandardMaterial({ color: 0xf4d58d, roughness: 0.5 });
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.9, 3), furMat);
+        body.position.set(0, 0.6, 0);
+        group.add(body);
+
+        const neck = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.6), furMat);
+        neck.position.set(0, 1, -1.6);
+        group.add(neck);
+
+        const head = new THREE.Mesh(new THREE.BoxGeometry(1, 0.9, 0.9), headMat);
+        head.position.set(0, 1.1, -2.2);
+        group.add(head);
+
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.8), headMat);
+        snout.position.set(0, 0.9, -2.6);
+        group.add(snout);
+
+        const nose = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.25, 0.3), new THREE.MeshStandardMaterial({ color: 0x1f1f1f }));
+        nose.position.set(0, 0.95, -2.9);
+        group.add(nose);
+
+        const earGeom = new THREE.BoxGeometry(0.25, 0.5, 0.25);
+        const earLeft = new THREE.Mesh(earGeom, headMat);
+        earLeft.position.set(-0.35, 1.5, -2.1);
+        const earRight = earLeft.clone();
+        earRight.position.x *= -1;
+        group.add(earLeft);
+        group.add(earRight);
+
+        const legGeom = new THREE.BoxGeometry(0.4, 0.9, 0.4);
+        const offsets = [
+          [-0.6, 0.2, 1.1],
+          [0.6, 0.2, 1.1],
+          [-0.6, 0.2, -0.8],
+          [0.6, 0.2, -0.8],
+        ];
+        offsets.forEach(([x, y, z]) => {
+          const leg = new THREE.Mesh(legGeom, furMat);
+          leg.position.set(x, y, z);
+          group.add(leg);
+        });
+
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 1.4), accentMat);
+        tail.position.set(0, 1.1, 1.5);
+        tail.rotation.x = Math.PI * 0.3;
+        tail.name = "dogTail";
+        tail.userData.baseColor = tail.material.color.clone();
+        tail.userData.happyColor = new THREE.Color(0xfff4b0);
+        group.add(tail);
+
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.07, 8, 16), accentMat);
+        collar.rotation.x = Math.PI / 2;
+        collar.position.set(0, 0.95, -1.7);
+        group.add(collar);
+
+        group.castShadow = true;
+        group.receiveShadow = true;
+        group.position.set(-4.5, 1, -6);
+        group.rotation.y = Math.PI / 4;
+        scene.add(group);
+        dog = group;
+        dog.userData.tail = tail;
+      }
+
+      spawnDog();
+
+      function spawnCreeper() {
+        const group = new THREE.Group();
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.6, metalness: 0.1 });
+        const darkerMat = new THREE.MeshStandardMaterial({ color: 0x2f6f3c, roughness: 0.8 });
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3, 1.2), bodyMat);
+        body.position.y = 1.6;
+        group.add(body);
+
+        const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), bodyMat);
+        head.position.y = 3.6;
+        group.add(head);
+
+        const face = new THREE.Group();
+        const eyeGeom = new THREE.BoxGeometry(0.3, 0.4, 0.1);
+        const eyeL = new THREE.Mesh(eyeGeom, darkerMat);
+        eyeL.position.set(-0.35, 3.85, -0.85);
+        const eyeR = eyeL.clone();
+        eyeR.position.x *= -1;
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.1), darkerMat);
+        mouth.position.set(0, 3.4, -0.85);
+        const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.1), darkerMat);
+        jaw.position.set(0, 3.0, -0.85);
+        face.add(eyeL, eyeR, mouth, jaw);
+        group.add(face);
+
+        const legGeom = new THREE.BoxGeometry(0.6, 1.2, 0.6);
+        const legOffsets = [
+          [-0.35, 0.3, 0.35],
+          [0.35, 0.3, 0.35],
+          [-0.35, 0.3, -0.35],
+          [0.35, 0.3, -0.35],
+        ];
+        legOffsets.forEach(([x, y, z], idx) => {
+          const leg = new THREE.Mesh(legGeom, bodyMat);
+          leg.position.set(x, y, z);
+          leg.name = `creeperLeg${idx}`;
+          group.add(leg);
+        });
+
+        group.castShadow = true;
+        group.receiveShadow = true;
+        group.position.set(-1, 1.2, 5);
+        group.rotation.y = -Math.PI / 6;
+        scene.add(group);
+        creeper = group;
+      }
+
+      spawnCreeper();
+
+      function spawnTree() {
+        const group = new THREE.Group();
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8c5727, roughness: 0.85 });
+        const leafMat = new THREE.MeshStandardMaterial({ color: 0x3b7d3c, roughness: 0.6 });
+
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 5, 8), trunkMat);
+        trunk.position.y = 2.5;
+        trunk.castShadow = true;
+        trunk.receiveShadow = true;
+        group.add(trunk);
+
+        const canopy = new THREE.Mesh(new THREE.SphereGeometry(2.2, 10, 10), leafMat);
+        canopy.scale.y = 0.8;
+        canopy.position.y = 4.5;
+        canopy.castShadow = true;
+        canopy.receiveShadow = true;
+        group.add(canopy);
+
+        group.position.set(6, 0, -3);
+        scene.add(group);
+        tree = group;
+        treeState.hp = treeState.max;
+        treeState.alive = true;
+        window.game.tree = { group, state: treeState, respawn: () => {
+          if (!tree) spawnTree();
+        } };
+      }
+
+      spawnTree();
+
+      function scatterGrass() {
+        const bladeGeom = new THREE.ConeGeometry(0.12, 0.7, 6);
+        grassField = new THREE.Group();
+        const palette = [0x5fa857, 0x4f9448, 0x6fbf63];
+        for (let i = 0; i < 240; i++) {
+          const mat = new THREE.MeshStandardMaterial({ color: palette[i % palette.length], roughness: 0.9 });
+          const blade = new THREE.Mesh(bladeGeom, mat);
+          const x = THREE.MathUtils.randFloatSpread(WORLD_RADIUS * 1.5);
+          const z = THREE.MathUtils.randFloatSpread(WORLD_RADIUS * 1.5);
+          const surfaceY = getSurfaceHeight(x, z);
+          blade.position.set(x, surfaceY + 0.2, z);
+          blade.rotation.y = Math.random() * Math.PI;
+          blade.scale.setScalar(0.8 + Math.random() * 0.5);
+          blade.castShadow = true;
+          blade.receiveShadow = true;
+          grassField.add(blade);
+        }
+        scene.add(grassField);
+      }
+
+      scatterGrass();
+
+      const clock = new THREE.Clock();
+      const velocity = new THREE.Vector3();
+      const direction = new THREE.Vector3();
+      const move = {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+      };
+      let canJump = true;
+
+      function nearBed(position) {
+        return Math.hypot(position.x - bedCenter.x, position.z - bedCenter.z) <= restPose.radius;
+      }
+
+      function enterRest() {
+        isResting = true;
+        velocity.set(0, 0, 0);
+        controls.getObject().position.copy(restPose.position);
+        camera.lookAt(restPose.lookAt);
+        controls.unlock();
+        toggleOverlay(false);
+        setHint("Nap time... Press F to stand up.", 0);
+      }
+
+      function exitRest() {
+        isResting = false;
+        const obj = controls.getObject().position;
+        obj.copy(restPose.exitPosition);
+        obj.y = getSurfaceHeight(obj.x, obj.z) + PLAYER_EYE_HEIGHT;
+        setHint("Back to adventuring!", 120);
+        controls.lock();
+      }
+
+      function brushDog() {
+        if (!dog) return;
+        if (isResting) {
+          setHint("Stand up before brushing.", 120);
+          return;
+        }
+        const playerPos = controls.getObject().position;
+        const distance = playerPos.distanceTo(dog.position);
+        if (distance > 4) {
+          setHint("Get closer to brush the pup.", 150);
+          return;
+        }
+        dogHappyTimer = 240;
+        setHint("Brush brush! Pup is thrilled.", 150);
+      }
+
+      function chopTree() {
+        if (!treeState.alive || !tree) {
+          setHint("Tree already down.", 100);
+          return;
+        }
+        if (isResting) {
+          setHint("Stand up before chopping.", 120);
+          return;
+        }
+        const playerPos = controls.getObject().position;
+        const distance = playerPos.distanceTo(tree.position);
+        if (distance > 6) {
+          setHint("Get closer to the tree.", 120);
+          return;
+        }
+        treeState.hp = Math.max(0, treeState.hp - 1);
+        setHint(`Axe swing! ${treeState.hp}/${treeState.max} left.`, 120);
+        tree.rotation.z = (Math.random() - 0.5) * 0.2;
+        if (treeState.hp === 0) {
+          treeState.alive = false;
+          setHint("Timber! Tree fell.", 160);
+          scene.remove(tree);
+          tree = null;
+          addBlockAt(6, 1, -3, 0x8c5727);
+          addBlockAt(7, 1, -3, 0x8c5727);
+          addBlockAt(6, 1, -2, 0x8c5727);
+        }
+      }
+
+      const onKeyDown = (event) => {
+        switch (event.code) {
+          case "KeyW":
+          case "ArrowUp":
+            move.forward = true;
+            break;
+          case "KeyS":
+          case "ArrowDown":
+            move.backward = true;
+            break;
+          case "KeyA":
+          case "ArrowLeft":
+            move.left = true;
+            break;
+          case "KeyD":
+          case "ArrowRight":
+            move.right = true;
+            break;
+          case "Space":
+            if (canJump) {
+              velocity.y += 12;
+            }
+            canJump = false;
+            break;
+          case "Digit2":
+          case "KeyB":
+            brushDog();
+            break;
+          case "Digit3":
+          case "KeyX":
+            chopTree();
+            break;
+          case "KeyG":
+            changeHealth(-10);
+            break;
+          case "KeyH":
+            changeHealth(10);
+            break;
+          case "KeyF":
+            if (isResting) {
+              exitRest();
+            } else if (nearBed(controls.getObject().position)) {
+              enterRest();
+            } else {
+              setHint("Get closer to the bed to lie down.", 150);
+            }
+            break;
+        }
+      };
+
+      const onKeyUp = (event) => {
+        switch (event.code) {
+          case "KeyW":
+          case "ArrowUp":
+            move.forward = false;
+            break;
+          case "KeyS":
+          case "ArrowDown":
+            move.backward = false;
+            break;
+          case "KeyA":
+          case "ArrowLeft":
+            move.left = false;
+            break;
+          case "KeyD":
+          case "ArrowRight":
+            move.right = false;
+            break;
+        }
+      };
+
+      document.addEventListener("keydown", onKeyDown);
+      document.addEventListener("keyup", onKeyUp);
+
+      const playButton = document.getElementById("play");
+      const instructions = document.getElementById("instructions");
+
+      function toggleOverlay(show) {
+        if (!instructions) return;
+        instructions.style.display = show ? "flex" : "none";
+      }
+
+      playButton.addEventListener("click", () => {
+        toggleOverlay(false);
+        controls.lock();
+      });
+
+      renderer.domElement.addEventListener("click", () => {
+        if (!controls.isLocked) {
+          controls.lock();
+        }
+      });
+
+      controls.addEventListener("lock", () => {
+        toggleOverlay(false);
+        const obj = controls.getObject().position;
+        obj.y = getSurfaceHeight(obj.x, obj.z) + PLAYER_EYE_HEIGHT;
+      });
+      controls.addEventListener("unlock", () => {
+        if (isResting) return;
+        toggleOverlay(true);
+      });
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      const raycaster = new THREE.Raycaster();
+      const centerPointer = new THREE.Vector2(0, 0);
+
+      function mineBlock() {
+        raycaster.setFromCamera(centerPointer, camera);
+        const meshes = Array.from(blockMap.values());
+        const hit = raycaster.intersectObjects(meshes, false)[0];
+        if (!hit) return;
+        const { x, y, z } = hit.object.position;
+        // keep bedrock layers intact
+        if (y <= -2) return;
+        removeBlockAt(Math.round(x), Math.round(y), Math.round(z));
+      }
+
+      function placeBlock() {
+        raycaster.setFromCamera(centerPointer, camera);
+        const meshes = Array.from(blockMap.values());
+        const hit = raycaster.intersectObjects(meshes, false)[0];
+        if (!hit || !hit.face) return;
+        const pos = hit.object.position.clone().add(hit.face.normal);
+        const target = {
+          x: Math.round(pos.x),
+          y: Math.round(pos.y),
+          z: Math.round(pos.z),
+        };
+        if (target.y > 12) return;
+        addBlockAt(target.x, target.y, target.z, blockPalette[Math.floor(Math.random() * blockPalette.length)]);
+      }
+
+      renderer.domElement.addEventListener("mousedown", (event) => {
+        if (!controls.isLocked) return;
+        if (event.button === 0) {
+          mineBlock();
+        } else if (event.button === 2) {
+          placeBlock();
+        }
+      });
+
+      window.addEventListener("contextmenu", (event) => event.preventDefault());
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const delta = Math.min(0.1, clock.getDelta());
+
+        if (controls.isLocked && !isResting) {
+          velocity.x -= velocity.x * 8.0 * delta;
+          velocity.z -= velocity.z * 8.0 * delta;
+          velocity.y -= 25 * delta;
+
+          direction.z = Number(move.forward) - Number(move.backward);
+          direction.x = Number(move.right) - Number(move.left);
+          direction.normalize();
+
+          const moveSpeed = 40;
+          if (move.forward || move.backward) velocity.z -= direction.z * moveSpeed * delta;
+          if (move.left || move.right) velocity.x -= direction.x * moveSpeed * delta;
+
+          controls.moveRight(-velocity.x * delta);
+          controls.moveForward(-velocity.z * delta);
+          controls.getObject().position.y += velocity.y * delta;
+          const obj = controls.getObject().position;
+          const surface = getSurfaceHeight(obj.x, obj.z) + PLAYER_EYE_HEIGHT;
+          const isOnGround = obj.y <= surface + 0.05;
+          const needsStepUp = surface > obj.y && surface - obj.y <= STEP_HEIGHT;
+
+          if (isOnGround || needsStepUp) {
+            obj.y = surface;
+            velocity.y = Math.max(0, velocity.y);
+            canJump = true;
+          } else {
+            canJump = false;
+          }
+        } else if (isResting) {
+          const obj = controls.getObject().position;
+          obj.lerp(restPose.position, 0.1);
+          camera.lookAt(restPose.lookAt);
+        }
+
+        if (pickaxe) {
+          pickaxePhase += delta;
+          pickaxe.rotation.y += delta * 0.45;
+          pickaxe.position.y = 2.6 + Math.sin(pickaxePhase * 3) * 0.15;
+        }
+
+        if (dog) {
+          dogPhase += delta * 2;
+          if (dogHappyTimer > 0) {
+            dogHappyTimer = Math.max(0, dogHappyTimer - delta * 60);
+          }
+          const joy = Math.min(1, dogHappyTimer / 240);
+          const tail = dog.userData?.tail || dog.getObjectByName("dogTail");
+          if (tail) {
+            const wagAmount = 0.6 + joy * 0.6;
+            tail.rotation.y = Math.sin(dogPhase) * wagAmount;
+            if (tail.userData?.baseColor && tail.userData?.happyColor) {
+              tail.material.color.copy(tail.userData.baseColor).lerp(tail.userData.happyColor, joy);
+            }
+          }
+          dog.position.y = 1 + Math.sin(dogPhase * 0.5) * 0.03 + joy * 0.05;
+        }
+
+        if (creeper) {
+          creeperPulse = (creeperPulse + delta * 0.7) % Math.PI;
+          const scale = 1 + Math.sin(creeperPulse * 2) * 0.03;
+          creeper.scale.set(scale, 1 + Math.sin(creeperPulse * 2) * 0.04, scale);
+          for (let i = 0; i < 4; i++) {
+            const leg = creeper.getObjectByName(`creeperLeg${i}`);
+            if (leg) {
+              const swing = Math.sin(creeperPulse * 4 + i);
+              leg.position.y = 0.3 + swing * 0.05;
+            }
+          }
+        }
+
+        if (hintTimer > 0) {
+          hintTimer -= delta * 60;
+          if (hintTimer <= 0) {
+            hintEl.textContent = defaultHint;
+          }
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    </script>
+  </body>
+</html>
