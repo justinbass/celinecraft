@@ -226,11 +226,7 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(44px, 1fr));
         grid-auto-rows: 44px;
-        gap: 0.24rem;
-      }
-
-      .movement-spacer {
-        pointer-events: none;
+        gap: 0.2rem;
       }
 
       .virtual-key,
@@ -252,6 +248,11 @@
         transition: transform 0.08s ease, background 0.08s ease;
       }
 
+      .inline-action {
+        font-size: 0.72rem;
+        min-height: 32px;
+      }
+
       .space-key {
         grid-column: 1 / -1;
         min-height: 34px;
@@ -260,8 +261,8 @@
 
       .action-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(60px, 1fr));
-        gap: 0.35rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.3rem;
       }
 
       .virtual-key.active,
@@ -341,14 +342,16 @@
       <div class="controls-section">
         <span class="section-label">Move</span>
         <div class="movement-grid">
-          <span class="movement-spacer"></span>
+          <button class="action-key inline-action" data-action="mine" aria-label="Mine block">Mine</button>
           <button class="virtual-key" data-key="KeyW" aria-label="Move forward">W</button>
-          <span class="movement-spacer"></span>
+          <button class="action-key inline-action" data-action="place" aria-label="Place block">Place</button>
           <button class="virtual-key" data-key="KeyA" aria-label="Move left">A</button>
           <button class="virtual-key" data-key="KeyS" aria-label="Move backward">S</button>
           <button class="virtual-key" data-key="KeyD" aria-label="Move right">D</button>
-          <button class="virtual-key space-key" data-key="Space" aria-label="Jump">Space</button>
         </div>
+      </div>
+      <div class="movement-grid">
+        <button class="virtual-key space-key" data-key="Space" aria-label="Jump">Space</button>
       </div>
       <div class="controls-section">
         <span class="section-label">Actions</span>
@@ -356,13 +359,6 @@
           <button class="virtual-key" data-key="KeyF" aria-label="Nap or stand">Nap</button>
           <button class="virtual-key" data-key="KeyB" aria-label="Brush the dog">Brush</button>
           <button class="virtual-key" data-key="KeyX" aria-label="Chop the tree">Chop</button>
-        </div>
-      </div>
-      <div class="controls-section">
-        <span class="section-label">Build</span>
-        <div class="action-grid">
-          <button class="action-key" data-action="mine" aria-label="Mine block">Mine</button>
-          <button class="action-key" data-action="place" aria-label="Place block">Place</button>
         </div>
       </div>
     </div>
