@@ -190,18 +190,18 @@
 
       #mobile-controls {
         position: fixed;
-        bottom: 16px;
-        right: 16px;
+        bottom: 12px;
+        right: 12px;
         display: grid;
-        gap: 0.75rem;
-        padding: 0.9rem 1rem;
-        border-radius: 18px;
-        background: rgba(5, 8, 15, 0.85);
+        gap: 0.55rem;
+        padding: 0.65rem 0.8rem;
+        border-radius: 16px;
+        background: rgba(5, 8, 15, 0.82);
         border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
         color: #f4f8ff;
         z-index: 12;
-        width: min(90vw, 360px);
+        width: min(82vw, 300px);
         pointer-events: auto;
       }
 
@@ -224,9 +224,9 @@
 
       .movement-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(54px, 1fr));
-        grid-auto-rows: 54px;
-        gap: 0.35rem;
+        grid-template-columns: repeat(3, minmax(44px, 1fr));
+        grid-auto-rows: 44px;
+        gap: 0.24rem;
       }
 
       .movement-spacer {
@@ -239,23 +239,29 @@
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 12px;
         color: inherit;
-        font-size: 0.95rem;
+        font-size: 0.78rem;
         font-weight: 600;
         letter-spacing: 0.05em;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0.5rem;
-        min-height: 46px;
+        padding: 0.3rem;
+        min-height: 36px;
         touch-action: none;
         user-select: none;
         transition: transform 0.08s ease, background 0.08s ease;
       }
 
+      .space-key {
+        grid-column: 1 / -1;
+        min-height: 34px;
+        font-size: 0.75rem;
+      }
+
       .action-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(70px, 1fr));
-        gap: 0.45rem;
+        grid-template-columns: repeat(2, minmax(60px, 1fr));
+        gap: 0.35rem;
       }
 
       .virtual-key.active,
@@ -271,7 +277,7 @@
           left: 50%;
           right: auto;
           transform: translateX(-50%);
-          width: min(95vw, 420px);
+          width: min(90vw, 320px);
         }
       }
     </style>
@@ -341,12 +347,12 @@
           <button class="virtual-key" data-key="KeyA" aria-label="Move left">A</button>
           <button class="virtual-key" data-key="KeyS" aria-label="Move backward">S</button>
           <button class="virtual-key" data-key="KeyD" aria-label="Move right">D</button>
+          <button class="virtual-key space-key" data-key="Space" aria-label="Jump">Space</button>
         </div>
       </div>
       <div class="controls-section">
         <span class="section-label">Actions</span>
         <div class="action-grid">
-          <button class="virtual-key" data-key="Space" aria-label="Jump">Jump</button>
           <button class="virtual-key" data-key="KeyF" aria-label="Nap or stand">Nap</button>
           <button class="virtual-key" data-key="KeyB" aria-label="Brush the dog">Brush</button>
           <button class="virtual-key" data-key="KeyX" aria-label="Chop the tree">Chop</button>
@@ -394,7 +400,19 @@
       let touchLookBound = false;
       const MAX_PITCH = Math.PI / 2 - 0.05;
       const TOUCH_SENSITIVITY = 0.0032;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
       window.game = { controls, scene };
+
+      function detectMobileMode() {
+        if (navigator.userAgentData?.mobile) return true;
+        const ua = navigator.userAgent || "";
+        const coarsePointer =
+          typeof window !== "undefined" && window.matchMedia
+            ? window.matchMedia("(pointer: coarse)").matches
+            : false;
+        const touchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+        return mobileRegex.test(ua) || (coarsePointer && touchPoints);
+      }
 
       const hintEl = document.querySelector("#hud span");
       const defaultHint = hintEl.textContent;
@@ -1120,8 +1138,7 @@
       function initMobileControls() {
         const container = document.getElementById("mobile-controls");
         if (!container) return;
-        const prefersTouch = window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-        const shouldShow = prefersTouch || window.innerWidth <= 900;
+        const shouldShow = detectMobileMode();
         if (!shouldShow || isTouchMode) return;
         container.removeAttribute("hidden");
         isTouchMode = true;
@@ -1134,52 +1151,77 @@
           const code = button.dataset.key;
           if (!code) return;
           let pressed = false;
+          let activePointerId = null;
+          const hasPointerCapture = typeof button.setPointerCapture === "function";
           const press = (event) => {
             event.preventDefault();
             event.stopPropagation();
             if (pressed) return;
+            activePointerId = event.pointerId;
             pressed = true;
             button.classList.add("active");
             handleKeyInput(code, true);
+            if (hasPointerCapture && activePointerId != null) {
+              button.setPointerCapture(activePointerId);
+            }
           };
           const release = (event) => {
             event.preventDefault();
             event.stopPropagation();
-            if (!pressed) return;
+            if (!pressed || (activePointerId !== null && event.pointerId !== activePointerId)) return;
             pressed = false;
+            if (hasPointerCapture && activePointerId != null && typeof button.releasePointerCapture === "function") {
+              button.releasePointerCapture(activePointerId);
+            }
+            activePointerId = null;
             button.classList.remove("active");
             handleKeyInput(code, false);
           };
           button.addEventListener("pointerdown", press);
           button.addEventListener("pointerup", release);
-          button.addEventListener("pointerleave", release);
           button.addEventListener("pointercancel", release);
+          if (!hasPointerCapture) {
+            button.addEventListener("pointerleave", release);
+          }
         });
 
         const actionButtons = container.querySelectorAll("[data-action]");
         actionButtons.forEach((button) => {
           const action = button.dataset.action;
+          let activePointerId = null;
+          const hasPointerCapture = typeof button.setPointerCapture === "function";
           const trigger = (event) => {
             event.preventDefault();
             event.stopPropagation();
+            activePointerId = event.pointerId;
             button.classList.add("active");
             if (action === "mine") {
               mineBlock();
             } else if (action === "place") {
               placeBlock();
             }
+            if (hasPointerCapture && activePointerId != null) {
+              button.setPointerCapture(activePointerId);
+            }
           };
           const release = (event) => {
             if (event) {
+              if (activePointerId !== null && event.pointerId !== activePointerId) return;
               event.stopPropagation();
               event.preventDefault();
             }
             button.classList.remove("active");
+            if (hasPointerCapture && activePointerId != null && typeof button.releasePointerCapture === "function") {
+              button.releasePointerCapture(activePointerId);
+            }
+            activePointerId = null;
           };
           button.addEventListener("pointerdown", trigger);
           button.addEventListener("pointerup", release);
-          button.addEventListener("pointerleave", release);
           button.addEventListener("pointercancel", release);
+          if (!hasPointerCapture) {
+            button.addEventListener("pointerleave", release);
+          }
         });
       }
 
