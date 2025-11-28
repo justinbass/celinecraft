@@ -393,13 +393,13 @@
       controls.getObject().position.set(0, 3, 12);
       controls.getObject().lookAt(new THREE.Vector3(0, 1.5, 0));
       scene.add(controls.getObject());
-      const yawObject = controls.getObject();
-      const pitchObject = yawObject.children[0] || new THREE.Object3D();
       let isTouchMode = false;
       const touchLookState = { enabled: false, pointerId: null, lastX: 0, lastY: 0 };
       let touchLookBound = false;
       const MAX_PITCH = Math.PI / 2 - 0.05;
       const TOUCH_SENSITIVITY = 0.0032;
+      const touchEuler = new THREE.Euler(0, 0, 0, "YXZ");
+      const HALF_PI = Math.PI / 2;
       const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
       window.game = { controls, scene };
 
@@ -1125,14 +1125,15 @@
 
       function applyTouchLook(deltaX, deltaY) {
         if (!isTouchMode) return;
-        yawObject.rotation.y -= deltaX * TOUCH_SENSITIVITY;
-        if (pitchObject) {
-          pitchObject.rotation.x = THREE.MathUtils.clamp(
-            pitchObject.rotation.x - deltaY * TOUCH_SENSITIVITY,
-            -MAX_PITCH,
-            MAX_PITCH
-          );
-        }
+        touchEuler.setFromQuaternion(camera.quaternion);
+        const speed = TOUCH_SENSITIVITY * (controls.pointerSpeed || 1);
+        touchEuler.y -= deltaX * speed;
+        touchEuler.x -= deltaY * speed;
+        const min = HALF_PI - (controls.maxPolarAngle || Math.PI);
+        const max = HALF_PI - (controls.minPolarAngle || 0);
+        touchEuler.x = THREE.MathUtils.clamp(touchEuler.x, min, max);
+        touchEuler.x = THREE.MathUtils.clamp(touchEuler.x, -MAX_PITCH, MAX_PITCH);
+        camera.quaternion.setFromEuler(touchEuler);
       }
 
       function initMobileControls() {
