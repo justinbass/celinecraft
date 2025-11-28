@@ -371,12 +371,30 @@
       import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js?module";
       import { PointerLockControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/PointerLockControls.js?module";
 
-      const getPixelRatio = () => Math.min(window.devicePixelRatio || 1, 1.5);
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      function detectMobileMode() {
+        if (navigator.userAgentData?.mobile) return true;
+        const ua = navigator.userAgent || "";
+        const coarsePointer =
+          typeof window !== "undefined" && window.matchMedia
+            ? window.matchMedia("(pointer: coarse)").matches
+            : false;
+        const touchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+        return mobileRegex.test(ua) || (coarsePointer && touchPoints);
+      }
+
+      const isMobile = detectMobileMode();
+
+      const getPixelRatio = () => {
+        const ratio = window.devicePixelRatio || 1;
+        return Math.min(isMobile ? 1 : ratio, 1.5);
+      };
+
+      const renderer = new THREE.WebGLRenderer({ antialias: !isMobile });
       renderer.setPixelRatio(getPixelRatio());
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.enabled = !isMobile;
       document.body.appendChild(renderer.domElement);
 
       const scene = new THREE.Scene();
@@ -400,19 +418,7 @@
       const TOUCH_SENSITIVITY = 0.0032;
       const touchEuler = new THREE.Euler(0, 0, 0, "YXZ");
       const HALF_PI = Math.PI / 2;
-      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
       window.game = { controls, scene };
-
-      function detectMobileMode() {
-        if (navigator.userAgentData?.mobile) return true;
-        const ua = navigator.userAgent || "";
-        const coarsePointer =
-          typeof window !== "undefined" && window.matchMedia
-            ? window.matchMedia("(pointer: coarse)").matches
-            : false;
-        const touchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
-        return mobileRegex.test(ua) || (coarsePointer && touchPoints);
-      }
 
       const hintEl = document.querySelector("#hud span");
       const defaultHint = hintEl.textContent;
@@ -460,11 +466,13 @@
       scene.add(ambient);
       const sun = new THREE.DirectionalLight(0xfff4d0, 1.1);
       sun.position.set(40, 60, 10);
-      sun.castShadow = true;
-      sun.shadow.camera.top = 35;
-      sun.shadow.camera.bottom = -35;
-      sun.shadow.camera.left = -35;
-      sun.shadow.camera.right = 35;
+      sun.castShadow = !isMobile;
+      if (sun.castShadow) {
+        sun.shadow.camera.top = 35;
+        sun.shadow.camera.bottom = -35;
+        sun.shadow.camera.left = -35;
+        sun.shadow.camera.right = 35;
+      }
       scene.add(sun);
 
       const fogColor = new THREE.Color(0xb7e5ff);
@@ -1139,8 +1147,7 @@
       function initMobileControls() {
         const container = document.getElementById("mobile-controls");
         if (!container) return;
-        const shouldShow = detectMobileMode();
-        if (!shouldShow || isTouchMode) return;
+        if (!isMobile || isTouchMode) return;
         container.removeAttribute("hidden");
         isTouchMode = true;
         touchLookState.enabled = true;
