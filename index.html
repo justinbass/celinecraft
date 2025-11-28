@@ -187,6 +187,93 @@
         width: 42px;
         height: 42px;
       }
+
+      #mobile-controls {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        display: grid;
+        gap: 0.75rem;
+        padding: 0.9rem 1rem;
+        border-radius: 18px;
+        background: rgba(5, 8, 15, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+        color: #f4f8ff;
+        z-index: 12;
+        width: min(90vw, 360px);
+        pointer-events: auto;
+      }
+
+      #mobile-controls[hidden] {
+        display: none;
+      }
+
+      .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .section-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.7;
+      }
+
+      .movement-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(54px, 1fr));
+        grid-auto-rows: 54px;
+        gap: 0.35rem;
+      }
+
+      .movement-spacer {
+        pointer-events: none;
+      }
+
+      .virtual-key,
+      .action-key {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 12px;
+        color: inherit;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+        min-height: 46px;
+        touch-action: none;
+        user-select: none;
+        transition: transform 0.08s ease, background 0.08s ease;
+      }
+
+      .action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(70px, 1fr));
+        gap: 0.45rem;
+      }
+
+      .virtual-key.active,
+      .action-key.active {
+        background: rgba(73, 255, 182, 0.2);
+        border-color: rgba(73, 255, 182, 0.8);
+        transform: scale(0.97);
+        box-shadow: 0 0 10px rgba(73, 255, 182, 0.25);
+      }
+
+      @media (max-width: 600px) {
+        #mobile-controls {
+          left: 50%;
+          right: auto;
+          transform: translateX(-50%);
+          width: min(95vw, 420px);
+        }
+      }
     </style>
   </head>
   <body>
@@ -233,7 +320,7 @@
         <span class="inventory-label">BRUSH</span>
       </div>
       <div class="inventory-item">
-        <div class="inventory-slot" title="Axe">
+      <div class="inventory-slot" title="Axe">
           <svg viewBox="0 0 64 64" aria-hidden="true">
             <path d="M18 14 L32 28" stroke="#7b4a1f" stroke-width="8" stroke-linecap="round" />
             <path d="M32 28 L48 16 L54 22 L38 34 Z" fill="#dfe8f0" stroke="#7f8da3" stroke-width="3" />
@@ -241,6 +328,36 @@
           </svg>
         </div>
         <span class="inventory-label">AXE</span>
+      </div>
+    </div>
+
+    <div id="mobile-controls" hidden aria-label="On-screen controls for touch">
+      <div class="controls-section">
+        <span class="section-label">Move</span>
+        <div class="movement-grid">
+          <span class="movement-spacer"></span>
+          <button class="virtual-key" data-key="KeyW" aria-label="Move forward">W</button>
+          <span class="movement-spacer"></span>
+          <button class="virtual-key" data-key="KeyA" aria-label="Move left">A</button>
+          <button class="virtual-key" data-key="KeyS" aria-label="Move backward">S</button>
+          <button class="virtual-key" data-key="KeyD" aria-label="Move right">D</button>
+        </div>
+      </div>
+      <div class="controls-section">
+        <span class="section-label">Actions</span>
+        <div class="action-grid">
+          <button class="virtual-key" data-key="Space" aria-label="Jump">Jump</button>
+          <button class="virtual-key" data-key="KeyF" aria-label="Nap or stand">Nap</button>
+          <button class="virtual-key" data-key="KeyB" aria-label="Brush the dog">Brush</button>
+          <button class="virtual-key" data-key="KeyX" aria-label="Chop the tree">Chop</button>
+        </div>
+      </div>
+      <div class="controls-section">
+        <span class="section-label">Build</span>
+        <div class="action-grid">
+          <button class="action-key" data-action="mine" aria-label="Mine block">Mine</button>
+          <button class="action-key" data-action="place" aria-label="Place block">Place</button>
+        </div>
       </div>
     </div>
 
@@ -800,45 +917,46 @@
         }
       }
 
-      const onKeyDown = (event) => {
-        switch (event.code) {
+      function handleKeyInput(code, pressed) {
+        switch (code) {
           case "KeyW":
           case "ArrowUp":
-            move.forward = true;
-            break;
+            move.forward = pressed;
+            return true;
           case "KeyS":
           case "ArrowDown":
-            move.backward = true;
-            break;
+            move.backward = pressed;
+            return true;
           case "KeyA":
           case "ArrowLeft":
-            move.left = true;
-            break;
+            move.left = pressed;
+            return true;
           case "KeyD":
           case "ArrowRight":
-            move.right = true;
-            break;
+            move.right = pressed;
+            return true;
           case "Space":
-            if (canJump) {
+            if (pressed && canJump) {
               velocity.y += 12;
+              canJump = false;
             }
-            canJump = false;
-            break;
+            return true;
           case "Digit2":
           case "KeyB":
-            brushDog();
-            break;
+            if (pressed) brushDog();
+            return true;
           case "Digit3":
           case "KeyX":
-            chopTree();
-            break;
+            if (pressed) chopTree();
+            return true;
           case "KeyG":
-            changeHealth(-10);
-            break;
+            if (pressed) changeHealth(-10);
+            return true;
           case "KeyH":
-            changeHealth(10);
-            break;
+            if (pressed) changeHealth(10);
+            return true;
           case "KeyF":
+            if (!pressed) return true;
             if (isResting) {
               exitRest();
             } else if (nearBed(controls.getObject().position)) {
@@ -846,28 +964,21 @@
             } else {
               setHint("Get closer to the bed to lie down.", 150);
             }
-            break;
+            return true;
+          default:
+            return false;
+        }
+      }
+
+      const onKeyDown = (event) => {
+        if (handleKeyInput(event.code, true)) {
+          event.preventDefault();
         }
       };
 
       const onKeyUp = (event) => {
-        switch (event.code) {
-          case "KeyW":
-          case "ArrowUp":
-            move.forward = false;
-            break;
-          case "KeyS":
-          case "ArrowDown":
-            move.backward = false;
-            break;
-          case "KeyA":
-          case "ArrowLeft":
-            move.left = false;
-            break;
-          case "KeyD":
-          case "ArrowRight":
-            move.right = false;
-            break;
+        if (handleKeyInput(event.code, false)) {
+          event.preventDefault();
         }
       };
 
@@ -938,6 +1049,59 @@
         addBlockAt(target.x, target.y, target.z, blockPalette[Math.floor(Math.random() * blockPalette.length)]);
       }
 
+      function initMobileControls() {
+        const container = document.getElementById("mobile-controls");
+        if (!container) return;
+        const prefersTouch = window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+        const shouldShow = prefersTouch || window.innerWidth <= 900;
+        if (!shouldShow) return;
+        container.removeAttribute("hidden");
+
+        const keyButtons = container.querySelectorAll("[data-key]");
+        keyButtons.forEach((button) => {
+          const code = button.dataset.key;
+          if (!code) return;
+          let pressed = false;
+          const press = (event) => {
+            event.preventDefault();
+            if (pressed) return;
+            pressed = true;
+            button.classList.add("active");
+            handleKeyInput(code, true);
+          };
+          const release = (event) => {
+            event.preventDefault();
+            if (!pressed) return;
+            pressed = false;
+            button.classList.remove("active");
+            handleKeyInput(code, false);
+          };
+          button.addEventListener("pointerdown", press);
+          button.addEventListener("pointerup", release);
+          button.addEventListener("pointerleave", release);
+          button.addEventListener("pointercancel", release);
+        });
+
+        const actionButtons = container.querySelectorAll("[data-action]");
+        actionButtons.forEach((button) => {
+          const action = button.dataset.action;
+          const trigger = (event) => {
+            event.preventDefault();
+            button.classList.add("active");
+            if (action === "mine") {
+              mineBlock();
+            } else if (action === "place") {
+              placeBlock();
+            }
+          };
+          const release = () => button.classList.remove("active");
+          button.addEventListener("pointerdown", trigger);
+          button.addEventListener("pointerup", release);
+          button.addEventListener("pointerleave", release);
+          button.addEventListener("pointercancel", release);
+        });
+      }
+
       renderer.domElement.addEventListener("mousedown", (event) => {
         if (!controls.isLocked) return;
         if (event.button === 0) {
@@ -948,6 +1112,7 @@
       });
 
       window.addEventListener("contextmenu", (event) => event.preventDefault());
+      initMobileControls();
 
       function animate() {
         requestAnimationFrame(animate);
